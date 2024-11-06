@@ -2,10 +2,10 @@ import Joi from 'joi'
 
 const schema = Joi.object({
     name: Joi.string()
-        .alphanum()
         .min(3)
         .max(100)
         .required(),
+    description: Joi.string().required()
 })
 
-export default schema.validate
+export default (data) => schema.validate(data)

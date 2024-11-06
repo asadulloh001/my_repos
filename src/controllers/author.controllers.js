@@ -1,3 +1,4 @@
+import { paginate } from "../helpers/paginate.js";
 import author from "../models/author.models.js";
 import midCheck from '../schemas/author.schema.js'
 
@@ -9,9 +10,9 @@ export const createAuthor = async (req, res, next) => {
             return res.status(400).json({success: false, error: error.details[0].message})
         }
 
-        const newAuthor = await author(value)
-        newAuthor.save()
-        res.status(200).json({success: true, user_id: newAuthor})
+        const newAuthor = new author(value)
+        await newAuthor.save()
+        res.status(200).json({success: true, author_id: newAuthor})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
     }
@@ -19,12 +20,12 @@ export const createAuthor = async (req, res, next) => {
 
 export const readAuthors = async (req, res, next) => {
     try {
-        const authors = await author.find().offset(req.query.offset || 0).limit(req.query.limit || 10)
+        const authors = await author.find()
         if(!authors.length) {
             return res.status(400).json({success: false, message: "No authors found"})
         }
-
-        return res.status(200).json({success: true, authors})
+        const paginated = paginate(req.query.page || 1, req.query.limit || 10, authors)
+        return res.status(200).json({success: true, paginated})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
     }
@@ -33,13 +34,8 @@ export const readAuthors = async (req, res, next) => {
 export const updateAuthor = async (req, res, next) => {
     try {
         const id = req.params.id
-        const {error, value} = midCheck(req.body)
-        
-        if(error || !id) {
-            return res.status(400).json({success: false, error: error?.details[0]?.message})
-        }
 
-        const updatedAuthor = await author.findByIdAndUpdate(id, value)
+        const updatedAuthor = await author.findByIdAndUpdate(id, req.body)
         res.status(200).send({success: true, updated: updatedAuthor})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
@@ -78,7 +74,8 @@ export const searchAuthor = async (req, res, next) => {
         const theAuthor = await author.find(req.query)
         if(!theAuthor.length)
             return res.status(400).json({success: false, message: "No Author was found"})
-        return res.status(200).json({success: true, Author: theAuthor})
+        
+        return res.status(200).json({success: true, author: theAuthor})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
     }

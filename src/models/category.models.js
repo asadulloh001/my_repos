@@ -3,9 +3,12 @@ import mongoose from 'mongoose';
 const categorySchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
+        unique: true,
+        required: true
     }
-});
+}, {
+    timestamps: true
+}); 
 
 const category = new mongoose.model('category', categorySchema)
 

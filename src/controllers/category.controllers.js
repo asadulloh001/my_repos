@@ -1,5 +1,6 @@
-import category from "../models/category.models";
-import midCheck from '../schemas/collection.schema.js'
+import category from "../models/category.models.js";
+import midCheck from '../schemas/category.schema.js'
+import { paginate } from "../helpers/paginate.js";
 
 export const createCategory = async (req, res, next) => {
     try {
@@ -9,9 +10,10 @@ export const createCategory = async (req, res, next) => {
             return res.status(400).json({success: false, error: error.details[0].message})
         }
 
-        const newCategory = await category(value)
-        newCategory.save()
-        res.status(200).json({success: true, user_id: newCategory})
+        const newCategory = new category(value)
+        await newCategory.save()
+        
+        res.status(200).json({success: true, category_id: newCategory})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
     }
@@ -19,12 +21,13 @@ export const createCategory = async (req, res, next) => {
 
 export const readCategorys = async (req, res, next) => {
     try {
-        const categorys = await category.find().offset(req.query.offset || 0).limit(req.query.limit || 10)
-        if(!categorys.length) {
+        const categories = await category.find()
+        if(!categories.length) {
             return res.status(400).json({success: false, message: "No category found"})
         }
+        const paginated = paginate(req.query.page || 1, req.query.limit || 10, categories)
 
-        return res.status(200).json({success: true, categorys})
+        return res.status(200).json({success: true, paginated})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
     }
@@ -33,13 +36,8 @@ export const readCategorys = async (req, res, next) => {
 export const updateCategory = async (req, res, next) => {
     try {
         const id = req.params.id
-        const {error, value} = midCheck(req.body)
-        
-        if(error || !id) {
-            return res.status(400).json({success: false, error: error?.details[0]?.message})
-        }
 
-        const updatedCategory = await category.findByIdAndUpdate(id, value)
+        const updatedCategory = await category.findByIdAndUpdate(id, req.body)
         res.status(200).send({success: true, updated: updatedCategory})
     } catch (error) {
         res.status(500).json({success: false, error: error.message})
